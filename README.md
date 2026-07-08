@@ -117,6 +117,32 @@ Phase 3  Haiku  ใบเสร็จ ฟอร์ม รายงาน test da
 Review   Opus   ไล่ path เงิน+สต็อก ก่อน go-live
 ```
 
+### 🎨→⚙️ UI เสร็จแล้ว แต่ยังไม่ได้ออกแบบ Backend
+
+ยังเป็นงาน "ออกแบบ" → **Opus** ไม่เปลี่ยน แต่เคสนี้มีข้อได้เปรียบ: **UI ที่เสร็จแล้ว = สเปคของ Backend ฟรีๆ**
+
+```
+ทุกหน้าจอ  → บอกว่าต้องมี API อะไร คืนข้อมูลอะไร
+ทุกปุ่ม    → บอกว่าต้องมี action/endpoint อะไร
+ทุกฟอร์ม   → บอกว่ารับ input อะไร validate อะไร
+ทุก state  → loading/error/empty บอกว่า API fail แบบไหนได้บ้าง
+```
+
+| ขั้น | งาน | โมเดล |
+|---|---|---|
+| 1 | ไล่อ่าน UI ทุกหน้า → สกัดเป็น API contract | **Opus** |
+| 2 | ออกแบบ data model / schema จาก contract | **Opus** |
+| 3 | ตัดสินใจโครง: auth, sync/async, ownership ของ data | **Opus** |
+| 4 | เขียน endpoint ตาม contract | Sonnet |
+| 5 | เชื่อม UI เข้า API จริง | Sonnet |
+| 6 | test, mock data, boilerplate | Haiku |
+
+**⚠️ กับดักเคสนี้:** อย่าออกแบบ backend ตาม UI เป๊ะเกินไป — UI เปลี่ยนบ่อยกว่า backend เสมอ
+- ❌ endpoint 1 อันต่อ 1 หน้าจอ (`/api/home-page-data`) → UI เปลี่ยนที backend พังที
+- ✅ ออกแบบตาม **resource จริง** (`/users`, `/orders`) แล้วให้หน้าจอประกอบเอา
+
+นี่คือเหตุผลที่ต้อง Opus — Sonnet มักออกแบบ "ตามที่ UI ขอ" ตรงๆ แต่ Opus จะถอยมามองว่า *ข้อมูลจริงของระบบคืออะไร* แล้วออกแบบให้ทนต่อการเปลี่ยน UI
+
 ### 🔗 ระบบใหญ่โยงกัน (แชต + การเงิน + สมาชิก)
 
 หลักเดียวกับ POS: **การเงิน = Opus ทั้งหมด · สมาชิก = Opus ออกแบบ/Sonnet เขียน · แชต = Sonnet · รอยต่อ = Opus เสมอ**
