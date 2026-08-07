@@ -20,6 +20,7 @@
 | ตั้งค่า Claude Code หรือ API | [สลับโมเดลและ effort](#4-สลับโมเดลและ-effort-อย่างไร) |
 | ออกแบบระบบ API ที่ route หลายรุ่น | [Production routing](#9-ออกแบบระบบ-routing-สำหรับ-api) และ [evals](#10-วัดคุณภาพด้วย-evals) |
 | ประเมินและลดค่าใช้จ่าย | [คำนวณและลดต้นทุน](#11-คำนวณและลดต้นทุน) |
+| ใช้ Claude Code กับ Git อย่างปลอดภัย | [Git checkpoint protocol](#git-checkpoint-protocol-สำหรับ-claude-code) |
 | วาง guardrail สำหรับงานสำคัญ | [กฎสำหรับงานเสี่ยงสูง](#14-กฎสำหรับงานเสี่ยงสูง) |
 
 ---
@@ -436,6 +437,103 @@ Sonnet medium/high เป็นตัวทำงานหลัก
 - งาน B รอผลออกแบบจากงาน A
 - requirement ยังไม่นิ่ง
 - ไม่มี owner ตัดสินใจหรือเกณฑ์รวมผล
+
+### Git checkpoint protocol สำหรับ Claude Code
+
+Claude Code ทำงานใน working tree ของเรา ส่วน Git เป็นสมุดบันทึก checkpoint และ GitHub เป็น remote สำหรับ backup, review และทำงานร่วมกับทีม แนวคิดนี้ช่วยแยกคำสั่งที่ปลอดภัยออกจากคำสั่งที่เปลี่ยนประวัติหรือส่งผลกระทบภายนอก
+
+วงจรที่ควรใช้ก่อนให้ agent แก้ไฟล์:
+
+```text
+1. ตรวจสถานะและ branch ปัจจุบัน
+2. ดู diff เดิมและบันทึกสิ่งที่ผู้ใช้ทำค้างไว้
+3. สร้าง branch งานที่แยกจาก main
+4. ให้ Claude inspect → plan → edit
+5. รัน test/lint/build และตรวจ diff อีกครั้ง
+6. stage เฉพาะไฟล์ที่ตั้งใจ แล้วดู staged diff
+7. commit เป็นก้อนเล็กที่อธิบายเหตุผลเดียว
+8. push branch และเปิด Pull Request เมื่อพร้อม review
+```
+
+### ก่อนเริ่มงาน
+
+```bash
+git status --short --branch
+git diff
+git log --oneline --decorate -5
+git switch -c feature/short-description
+```
+
+ถ้า `git status` แสดงการแก้ไขที่ผู้ใช้ทำไว้ ให้ถามหรือบันทึกขอบเขตก่อน ไม่ให้ agent ถือว่าไฟล์เหล่านั้นเป็นของงานใหม่โดยอัตโนมัติ การเริ่มจาก branch ที่สะอาดทำให้แยกสาเหตุของ diff และ rollback ได้ง่าย
+
+### ระหว่างงาน
+
+ให้ Claude แก้ทีละขอบเขตและหยุดที่ checkpoint ที่อ่าน diff ได้:
+
+```bash
+git diff --stat
+git diff -- path/to/file
+git diff --check
+```
+
+กฎ permission ที่ควรเขียนไว้ใน prompt หรือ `CLAUDE.md`:
+
+- ห้าม `git reset --hard`, `git clean -fd`, force-push หรือแก้ประวัติที่ push แล้วโดยไม่มี approval
+- ห้าม `git add .` ในงานใหญ่โดยไม่ตรวจไฟล์ untracked และ secret
+- ห้าม commit `.env`, credential, token, build output หรือ dependency cache
+- ห้าม amend commit ของคนอื่นหรือ commit ที่ถูก push แล้วโดยไม่ตกลงกับทีม
+- ก่อน `git push`, `git merge`, `git rebase` หรือสร้าง PR ให้สรุป diff, test result และความเสี่ยง
+- ถ้าเจอ conflict ให้หยุดอธิบายทางเลือก ไม่เลือกฝั่งใดเงียบ ๆ
+
+### ก่อน commit และก่อน push
+
+```bash
+git status
+git diff
+git add path/to/intentional-file
+git diff --cached
+git diff --cached --check
+npm test                 # หรือคำสั่ง test ของโปรเจกต์
+git commit -m "describe one coherent change"
+git log --oneline -1
+git push -u origin feature/short-description
+```
+
+การแยก `git diff` กับ `git diff --cached` สำคัญมาก: อย่างแรกตรวจสิ่งที่ยังไม่ stage อย่างหลังตรวจสิ่งที่จะเข้า commit จริง หาก agent เสนอให้ commit ให้ผู้ใช้เห็น staged diff และผลตรวจสอบก่อนเสมอ
+
+### Recovery matrix
+
+| อาการ | คำสั่งเริ่มต้น | ความหมาย/ข้อควรระวัง |
+|---|---|---|
+| แก้ไฟล์แล้วอยากทิ้งการแก้ | `git restore path/to/file` | ลบการแก้ใน working tree ของไฟล์นั้น |
+| เผลอ stage ผิดไฟล์ | `git restore --staged path/to/file` | เอาออกจาก staging แต่เก็บการแก้ไว้ |
+| merge กำลังมี conflict และอยากยกเลิก | `git merge --abort` | กลับไปก่อนเริ่ม merge ถ้า Git ยังรองรับการ abort |
+| commit local ผิด แต่ยังอยากแก้ไฟล์ต่อ | `git reset --soft HEAD~1` | ย้ายหัว commit และเก็บไฟล์/staging ไว้ ตรวจให้แน่ใจก่อนจำนวน commit |
+| commit ถูก push แล้วต้องการหักล้าง | `git revert <commit>` | สร้าง commit ใหม่ ปลอดภัยกว่าการเขียนประวัติเดิม |
+
+`git reset --hard` และ `git clean -fd` เป็นคำสั่ง destructive ให้ใช้หลังตรวจ target อย่างชัดเจนและได้รับ approval เท่านั้น หากไม่แน่ใจให้สร้าง backup branch หรือใช้ `git stash push -u -m "checkpoint before recovery"` ก่อน
+
+### Model routing กับ Git checkpoint
+
+| งาน | รุ่นเริ่มต้น | checkpoint ที่ต้องมี |
+|---|---|---|
+| สกัด requirement และวาง architecture | Opus/Fable | plan ใน branch แยก, ไม่แก้ main |
+| implement feature ตาม plan | Sonnet | commit เล็ก, test หลังแต่ละ behavior |
+| test/format/rename ที่ซ้ำและอิสระ | Haiku | จำกัด path, ตรวจ diff และ test summary |
+| review ก่อน merge | Opus | staged diff, failure path, security และ regression |
+
+หลาย agent ที่แก้ไฟล์เดียวกันควรใช้ isolated worktree หรือแบ่ง ownership ให้ชัด หากไม่มีวิธีรวม diff ที่ deterministic ให้ใช้ agent เดียวคุม commit จะปลอดภัยกว่า
+
+### Pull Request ที่ agent ช่วยร่างได้
+
+ให้ Claude สรุป PR เป็น 4 ส่วน:
+
+1. **What changed** — เปลี่ยนอะไรและไฟล์หลักอยู่ไหน
+2. **Why** — requirement หรือ bug ที่แก้
+3. **How verified** — test, lint, build, browser หรือ manual check ที่รันจริง
+4. **Risks / follow-ups** — สิ่งที่ยังไม่พิสูจน์และวิธี rollback
+
+Claude ช่วยเตรียม branch, diff และข้อความ PR ได้ แต่การ merge เข้า `main` ควรยังเป็น approval boundary ของคนหรือ CI ที่ทีมกำหนด
 
 ---
 
@@ -1120,6 +1218,8 @@ message = client.messages.create(
 - [Claude Code CLI reference](https://code.claude.com/docs/en/cli-reference)
 - [Claude subscription and API billing are separate](https://support.claude.com/en/articles/9876003-i-have-a-paid-claude-subscription-pro-max-team-or-enterprise-plans-why-do-i-have-to-pay-separately-to-use-the-claude-api-and-console)
 
+แนวคิดด้าน checkpoint และ Git workflow ในส่วน [Git checkpoint protocol](#git-checkpoint-protocol-สำหรับ-claude-code) ต่อเนื่องจาก [Git Field Guide — how-to-use-git](https://github.com/zgame555/how-to-use-git) ควรอ่านคู่กับ [Git Documentation](https://git-scm.com/docs) และ [GitHub Docs](https://docs.github.com/en/get-started)
+
 ### วิธีดูแลคู่มือนี้เมื่อมีรุ่นใหม่
 
 1. ตรวจ Models overview, migration guide และ model deprecations
@@ -1129,7 +1229,8 @@ message = client.messages.create(
 5. รันตัวอย่าง API กับ SDK ปัจจุบัน
 6. รัน regression eval ก่อนเปลี่ยน routing policy
 7. อย่าแทนชื่อรุ่นแบบ search-and-replace; ทบทวนบทบาท ข้อจำกัด และ workflow ใหม่
-8. ระบุวันที่อัปเดตทุกครั้ง
+8. ทบทวน Git checkpoint, branch และ recovery commands เมื่อเปลี่ยน workflow ของ Claude Code
+9. ระบุวันที่อัปเดตทุกครั้ง
 
 ---
 
