@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="th" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Claude Code Field Manual — คู่มือเลือกโมเดล วาง workflow และใช้ Git checkpoint อย่างปลอดภัย"
+    />
+    <title>Claude Code / Field Manual</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class="app-shell">
+      <div class="mobile-scrim" data-close-menu></div>
+
+      <aside class="sidebar" id="site-nav" aria-label="Site navigation">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div>
+            <p class="brand-name">CLAUDE <span>CODE</span></p>
+            <p class="brand-kicker">FIELD MANUAL / 01</p>
+          </div>
+        </div>
+
+        <div class="sidebar-status">
+          <span class="status-dot"></span>
+          <span>local guide</span>
+          <span class="status-version">v2026.08</span>
+        </div>
+
+        <nav class="nav-groups">
+          <div class="nav-group">
+            <p class="nav-label">START HERE</p>
+            <a class="nav-link active" href="#overview"><span>01</span>ภาพรวม</a>
+            <a class="nav-link" href="#models"><span>02</span>เลือกโมเดล</a>
+          </div>
+          <div class="nav-group">
+            <p class="nav-label">OPERATE</p>
+            <a class="nav-link" href="#git"><span>03</span>Git checkpoint</a>
+            <a class="nav-link" href="#workflow"><span>04</span>วงจรทำงาน</a>
+            <a class="nav-link" href="#safety"><span>05</span>Guardrails</a>
+          </div>
+          <div class="nav-group">
+            <p class="nav-label">REFERENCE</p>
+            <a class="nav-link" href="#cheatsheet"><span>06</span>Cheat sheet</a>
+            <a class="nav-link" href="README.md"><span>↗</span>อ่านฉบับเต็ม</a>
+          </div>
+        </nav>
+
+        <div class="sidebar-foot">
+          <p>“Give the model<br />a clean checkpoint.”</p>
+          <span>— operator note</span>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="menu-toggle" type="button" aria-controls="site-nav" aria-expanded="false" data-menu-toggle>
+            <span></span><span></span><span></span>
+            <span class="sr-only">เปิดเมนู</span>
+          </button>
+          <div class="breadcrumb"><span>workspace</span><b>/</b><strong>how-to-use-claude</strong></div>
+          <div class="topbar-actions">
+            <span class="topbar-note">TH / EN</span>
+            <button class="icon-button" type="button" data-theme-toggle aria-label="สลับธีม" title="สลับธีม">
+              <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+              <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.1A8.5 8.5 0 0 1 8.9 3.6 8.5 8.5 0 1 0 20.4 15.1Z"></path></svg>
+            </button>
+          </div>
+        </header>
+
+        <section class="hero section-pad" id="overview">
+          <div class="hero-copy reveal">
+            <div class="eyebrow"><span class="eyebrow-line"></span> OPERATOR'S FIELD MANUAL <span class="eyebrow-count">01—06</span></div>
+            <h1>ให้ Claude <em>คิดเป็น</em><br />แล้วส่งงานให้เป็น</h1>
+            <p class="hero-lede">คู่มือใช้งาน Claude, Claude Code และ API ตั้งแต่เลือกโมเดลจนถึง checkpoint ที่ทีม review ได้จริง</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#models">เริ่มเลือกโมเดล <span>↓</span></a>
+              <a class="button button-quiet" href="README.md">เปิด README ฉบับเต็ม <span>↗</span></a>
+            </div>
+            <div class="hero-meta"><span>curated for builders</span><span class="meta-divider"></span><span>อ่าน 8 นาที</span></div>
+          </div>
+
+          <div class="hero-terminal reveal reveal-delay-1" aria-label="ตัวอย่าง Claude Code terminal">
+            <div class="terminal-chrome"><span class="terminal-dot coral"></span><span class="terminal-dot amber"></span><span class="terminal-dot mint"></span><span class="terminal-path">~/project</span><span class="terminal-live"><i></i> live</span></div>
+            <div class="terminal-body">
+              <div class="terminal-line terminal-muted"><span>09:41:12</span> session / ready</div>
+              <div class="terminal-line"><span class="prompt">›</span> claude <span class="terminal-cyan">--model sonnet</span></div>
+              <div class="terminal-line terminal-muted">  inspect → plan → edit → verify</div>
+              <div class="terminal-rule"></div>
+              <div class="terminal-line"><span class="prompt">›</span> <span class="terminal-amber">git status --short --branch</span></div>
+              <div class="terminal-line terminal-green">  ## feature/checkpoint...origin/feature/checkpoint</div>
+              <div class="terminal-line terminal-green">  M  README.md</div>
+              <div class="terminal-line terminal-muted">  clean enough to continue</div>
+              <div class="terminal-cursor"><span>▌</span></div>
+            </div>
+            <div class="terminal-foot"><span>MODEL / SONNET</span><span>EFFORT / HIGH</span><span>CONTEXT / 82%</span></div>
+          </div>
+        </section>
+
+        <section class="section-pad section-border" id="models">
+          <div class="section-heading reveal">
+            <div><p class="section-index">02 / ROUTING</p><h2>เลือกเครื่องมือ<br /><em>ก่อนเลือกคำตอบ</em></h2></div>
+            <p class="section-intro">โมเดลที่แพงที่สุดไม่ใช่คำตอบที่ดีที่สุดเสมอไป ให้ route ตามความเสี่ยง ความยาวของงาน และราคาความผิดพลาด</p>
+          </div>
+
+          <div class="model-grid">
+            <article class="model-card model-featured reveal reveal-delay-1">
+              <div class="card-top"><span class="model-tag">DEEP WORK</span><span class="model-code">01</span></div>
+              <h3>Opus <small>/ Fable</small></h3>
+              <p>ใช้กับ architecture, research, long-horizon agent และงานที่ failure แพง</p>
+              <div class="card-meter"><span style="width: 96%"></span></div><div class="meter-label"><span>reasoning depth</span><b>96</b></div>
+              <div class="card-footer"><span>ราคา / สูง</span><span>เริ่มเมื่อ ambiguity สูง</span></div>
+            </article>
+            <article class="model-card reveal reveal-delay-2">
+              <div class="card-top"><span class="model-tag">DEFAULT BUILDER</span><span class="model-code">02</span></div>
+              <h3>Sonnet</h3>
+              <p>ตัวทำงานหลักสำหรับ feature, refactor, test และ code review ทั่วไป</p>
+              <div class="card-meter"><span style="width: 82%"></span></div><div class="meter-label"><span>speed × quality</span><b>82</b></div>
+              <div class="card-footer"><span>ราคา / กลาง</span><span>default ที่ดี</span></div>
+            </article>
+            <article class="model-card reveal reveal-delay-3">
+              <div class="card-top"><span class="model-tag">FAST PASS</span><span class="model-code">03</span></div>
+              <h3>Haiku</h3>
+              <p>เหมาะกับ classify, summarize, format และงานซ้ำที่ scope ชัด</p>
+              <div class="card-meter"><span style="width: 64%"></span></div><div class="meter-label"><span>throughput</span><b>64</b></div>
+              <div class="card-footer"><span>ราคา / ต่ำ</span><span>อย่าให้ตัดสินใจใหญ่</span></div>
+            </article>
+          </div>
+          <div class="callout reveal"><span class="callout-mark">↗</span><p><strong>Rule of thumb:</strong> ถ้าอธิบาย task ให้ชัดในหนึ่งประโยคไม่ได้ ให้เพิ่มเวลาที่ step “plan” ก่อนเพิ่มขนาดโมเดล</p></div>
+        </section>
+
+        <section class="section-pad section-border" id="git">
+          <div class="section-heading reveal">
+            <div><p class="section-index">03 / CHECKPOINTS</p><h2>Claude แก้ไฟล์<br /><em>Git จำเหตุผล</em></h2></div>
+            <p class="section-intro">Working tree คือพื้นที่ทดลอง, commit คือ checkpoint, GitHub คือพื้นที่ส่งต่อให้คนอื่นตรวจ อย่าสับสนสามชั้นนี้เข้าด้วยกัน</p>
+          </div>
+
+          <div class="git-map reveal reveal-delay-1">
+            <div class="git-node"><span class="node-number">01</span><strong>WORKING TREE</strong><small>สิ่งที่กำลังเปลี่ยน</small><code>git diff</code></div>
+            <div class="git-connector"><span>→</span></div>
+            <div class="git-node git-node-active"><span class="node-number">02</span><strong>STAGING AREA</strong><small>สิ่งที่เลือกจะบันทึก</small><code>git add path</code></div>
+            <div class="git-connector"><span>→</span></div>
+            <div class="git-node"><span class="node-number">03</span><strong>LOCAL REPO</strong><small>checkpoint ที่ย้อนกลับได้</small><code>git commit</code></div>
+            <div class="git-connector"><span>→</span></div>
+            <div class="git-node git-node-remote"><span class="node-number">04</span><strong>GITHUB / PR</strong><small>review และ approval</small><code>git push</code></div>
+          </div>
+
+          <div class="code-panel reveal reveal-delay-2">
+            <div class="code-panel-head"><span><i class="panel-led"></i> SAFE SESSION START</span><button class="copy-button" type="button" data-copy="git status --short --branch\ngit diff\ngit log --oneline --decorate -5\ngit switch -c feature/short-description"><span>คัดลอก</span><b>⧉</b></button></div>
+            <pre><code><span class="code-comment"># 1. รู้ว่าเข้ามาใน branch ไหน</span>
+<span class="code-command">git status --short --branch</span>
+<span class="code-command">git diff</span>
+<span class="code-command">git log --oneline --decorate -5</span>
+
+<span class="code-comment"># 2. แยก checkpoint ออกจาก main</span>
+<span class="code-command">git switch -c feature/short-description</span>
+
+<span class="code-comment"># 3. ก่อน push: ตรวจสิ่งที่จะเข้า commit จริง</span>
+<span class="code-command">git diff --cached --check</span></code></pre>
+          </div>
+        </section>
+
+        <section class="section-pad section-border" id="workflow">
+          <div class="section-heading reveal">
+            <div><p class="section-index">04 / THE LOOP</p><h2>หนึ่งรอบที่ดี<br /><em>มีจุดหยุดเสมอ</em></h2></div>
+            <p class="section-intro">ให้ agent ทำงานเป็นช่วงสั้น ๆ ที่อ่าน diff และผลตรวจสอบได้ ไม่ปล่อยให้ “แก้ต่อไปเรื่อย ๆ” กลายเป็น process</p>
+          </div>
+
+          <div class="workflow-list">
+            <div class="workflow-step reveal"><span class="step-number">01</span><div><h3>Inspect</h3><p>อ่าน repository, สถานะ branch, tests และข้อจำกัดก่อนเสนอวิธีแก้</p></div><span class="step-command">status / diff</span></div>
+            <div class="workflow-step reveal reveal-delay-1"><span class="step-number">02</span><div><h3>Plan</h3><p>เขียน acceptance criteria, failure paths และขอบเขตไฟล์ที่ต้องแตะ</p></div><span class="step-command">plan / scope</span></div>
+            <div class="workflow-step reveal reveal-delay-2"><span class="step-number">03</span><div><h3>Edit</h3><p>แก้ทีละ behavior ให้ diff เล็กพอที่คนอื่นจะ review ได้ในครั้งเดียว</p></div><span class="step-command">edit / commit</span></div>
+            <div class="workflow-step reveal reveal-delay-3"><span class="step-number">04</span><div><h3>Verify</h3><p>รัน test, lint, build หรือ reproduction ที่พิสูจน์ behavior ใหม่จริง</p></div><span class="step-command">test / diff</span></div>
+            <div class="workflow-step reveal reveal-delay-4"><span class="step-number">05</span><div><h3>Handoff</h3><p>สรุปสิ่งที่เปลี่ยน หลักฐานที่ตรวจ และความเสี่ยงก่อน PR หรือ deploy</p></div><span class="step-command">PR / review</span></div>
+          </div>
+        </section>
+
+        <section class="section-pad section-border" id="safety">
+          <div class="section-heading reveal">
+            <div><p class="section-index">05 / GUARDRAILS</p><h2>ขอบเขตที่ชัด<br /><em>ทำให้ agent เก่งขึ้น</em></h2></div>
+            <p class="section-intro">ความเร็วที่ไม่มี approval boundary คือหนี้สิน ให้สิทธิ์ตามผลกระทบ ไม่ใช่ตามความมั่นใจของโมเดล</p>
+          </div>
+          <div class="guardrail-grid">
+            <article class="guardrail-card guardrail-stop reveal"><span class="guardrail-icon">!</span><h3>หยุดและขออนุมัติ</h3><ul><li>เงิน ข้อมูลส่วนตัว และสิทธิ์ deploy</li><li>push, merge, rebase หรือแก้ประวัติ</li><li>ส่งข้อความหรือเปลี่ยนระบบภายนอก</li></ul></article>
+            <article class="guardrail-card reveal reveal-delay-1"><span class="guardrail-icon">✓</span><h3>ทำต่อได้ใน scope</h3><ul><li>อ่านไฟล์และค้นหา dependency</li><li>แก้โค้ดใน branch ที่แยกแล้ว</li><li>รัน test / lint / build ที่ไม่ทำลายข้อมูล</li></ul></article>
+            <article class="guardrail-card reveal reveal-delay-2"><span class="guardrail-icon">⌁</span><h3>ถ้าไม่แน่ใจ</h3><ul><li>บันทึกสถานะก่อนทำ recovery</li><li>สรุปทางเลือกและ trade-off</li><li>หยุดเมื่อเจอ conflict ไม่เลือกฝั่งเงียบ ๆ</li></ul></article>
+          </div>
+        </section>
+
+        <section class="section-pad section-border" id="cheatsheet">
+          <div class="section-heading reveal">
+            <div><p class="section-index">06 / POCKET CARD</p><h2>คำสั่งที่ควร<br /><em>อยู่ข้างมือ</em></h2></div>
+            <p class="section-intro">เก็บส่วนนี้ไว้ใกล้ terminal สำหรับ session แรกหรือเวลาต้องกู้สถานะอย่างมีสติ</p>
+          </div>
+          <div class="cheat-grid reveal reveal-delay-1">
+            <div class="cheat-item"><code>git restore path</code><span>ทิ้งการแก้ของไฟล์นั้น</span></div>
+            <div class="cheat-item"><code>git restore --staged path</code><span>เอาไฟล์ออกจาก staging</span></div>
+            <div class="cheat-item"><code>git merge --abort</code><span>ยกเลิก merge ที่ conflict</span></div>
+            <div class="cheat-item"><code>git reset --soft HEAD~1</code><span>แก้ commit local โดยเก็บไฟล์</span></div>
+            <div class="cheat-item"><code>git revert &lt;commit&gt;</code><span>หักล้าง commit ที่ push แล้ว</span></div>
+            <div class="cheat-item cheat-danger"><code>git reset --hard</code><span>destructive — ขอ approval ก่อน</span></div>
+          </div>
+          <div class="final-cta reveal"><div><span class="cta-kicker">THE LONG VERSION</span><h3>อยากลงรายละเอียดทุกโมเดล<br />เปิดคู่มือฉบับเต็มใน README</h3></div><a class="button button-primary" href="README.md">อ่านต่อ <span>↗</span></a></div>
+        </section>
+
+        <footer class="site-footer"><span>CLAUDE CODE / FIELD MANUAL</span><span>สร้างเพื่อการทำงานที่ตรวจสอบได้</span><a href="#overview">กลับขึ้นบนสุด ↑</a></footer>
+      </main>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

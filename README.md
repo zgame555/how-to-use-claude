@@ -12,6 +12,8 @@
 
 ข้อมูลรุ่นและราคาอัปเดตล่าสุด: **2 สิงหาคม 2026** — ชื่อรุ่น ราคา availability และ UI เปลี่ยนได้เสมอ โปรดตรวจ [Models overview](https://platform.claude.com/docs/en/about-claude/models/overview), [Pricing](https://platform.claude.com/docs/en/about-claude/pricing) และ [Claude Code model configuration](https://code.claude.com/docs/en/model-config) ก่อนนำตัวเลขไปใช้ตัดสินใจทางธุรกิจ
 
+> **เวอร์ชันอ่านแบบเว็บ:** เปิด [Claude Code Field Manual](index.html) เพื่อดูหน้า dark terminal แบบ responsive พร้อม navigation, model cards, Git checkpoint map และปุ่มคัดลอกคำสั่ง
+
 ### ทางลัดสำหรับผู้อ่าน
 
 | ถ้าต้องการ | เริ่มอ่านที่ |
@@ -441,6 +443,52 @@ Sonnet medium/high เป็นตัวทำงานหลัก
 ### Git checkpoint protocol สำหรับ Claude Code
 
 Claude Code ทำงานใน working tree ของเรา ส่วน Git เป็นสมุดบันทึก checkpoint และ GitHub เป็น remote สำหรับ backup, review และทำงานร่วมกับทีม แนวคิดนี้ช่วยแยกคำสั่งที่ปลอดภัยออกจากคำสั่งที่เปลี่ยนประวัติหรือส่งผลกระทบภายนอก
+
+### Git กับ GitHub อยู่คนละชั้น
+
+อย่าใช้คำว่า “อยู่ใน GitHub แล้ว” แทนสถานะของไฟล์ในเครื่อง เพราะการแก้ไขจะผ่านหลายชั้นก่อนถึงทีม:
+
+| ชั้น | เก็บอะไร | คำถามที่ Claude ต้องตอบให้ได้ |
+|---|---|---|
+| Working tree | ไฟล์ที่กำลังถูกแก้ | ตอนนี้มี diff ที่ยังไม่ตรวจอะไรบ้าง |
+| Staging area | ไฟล์/บรรทัดที่เลือกเข้า commit | commit นี้ตั้งใจรวมอะไร และมี secret หลุดมาหรือไม่ |
+| Local repository | commit และ branch ในเครื่อง | checkpoint ล่าสุดคือ commit ไหน ย้อนกลับได้อย่างไร |
+| GitHub remote | branch ที่ push, PR และ review | สิ่งนี้ถูกส่งออกไปแล้วหรือยัง ใครต้องอนุมัติ |
+
+### ตั้งค่า repository ครั้งแรก
+
+สำหรับเครื่องหรือ repository ใหม่ ให้ตรวจ identity และ ignore rules ก่อนให้ agent เริ่มเขียนโค้ด:
+
+```bash
+git --version
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+# มี repository อยู่แล้ว
+git clone https://github.com/org/project.git
+cd project
+
+# เริ่ม repository ใหม่
+git init
+git branch -M main
+```
+
+สร้าง `.gitignore` ให้ครอบคลุม `.env`, credential, log, build output และ dependency cache ตั้งแต่ต้น อย่าใช้ `git add .` เป็นขั้นตอนแรกโดยไม่อ่านรายการไฟล์ที่ Git จะเก็บ
+
+### Daily loop: 8 คำสั่งที่ควรใช้เป็น checkpoint
+
+| เป้าหมาย | คำสั่ง | หลักการใช้กับ agent |
+|---|---|---|
+| ตรวจสถานะ | `git status --short --branch` | เรียกก่อนและหลังงานทุกก้อน |
+| อ่าน diff | `git diff` | แยกสิ่งที่มีอยู่เดิมออกจากสิ่งที่ agent เพิ่งแก้ |
+| เลือกไฟล์ | `git add path/to/file` | stage แบบระบุ path; หลีกเลี่ยง `git add .` จนกว่าจะตรวจครบ |
+| บันทึก checkpoint | `git commit -m "..."` | หนึ่ง commit ควรอธิบายเหตุผลเดียว |
+| แยกงาน | `git switch -c feature/short-description` | อย่าแก้ `main` ตรง ๆ |
+| อ่าน remote ล่าสุด | `git fetch origin` | ดึงข้อมูลโดยยังไม่เปลี่ยนไฟล์ใน branch ปัจจุบัน |
+| อัปเดต branch | `git pull --ff-only` | ป้องกันการสร้าง merge commit โดยไม่ตั้งใจ |
+| ส่งให้ทีม review | `git push -u origin feature/short-description` | push หลังดู diff, test และความเสี่ยงแล้ว |
+
+เส้นทางสั้นนี้สอดคล้องกับคู่มือภาคสนาม: `status → diff → add → commit` สำหรับงานประจำวัน และ `branch → fetch/pull → push → PR` สำหรับการทำงานร่วมกัน
 
 วงจรที่ควรใช้ก่อนให้ agent แก้ไฟล์:
 
